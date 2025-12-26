@@ -1,10 +1,16 @@
 import { ListChecksIcon, SignOutIcon } from '@phosphor-icons/react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useUser } from '../../hooks/useUser';
 import styles from './styles.module.css';
 
 function SideBar() {
-	const { userData } = useUser();
+	const { userData, logout } = useUser();
+	const navigate = useNavigate();
+
+	function handleLogout() {
+		logout();
+		navigate('/entrar');
+	}
 
 	return (
 		<div className={styles.container}>
@@ -14,7 +20,7 @@ function SideBar() {
 					<ListChecksIcon />
 				</Link>
 			</div>
-			<SignOutIcon className={styles.signout} />
+			<SignOutIcon onClick={handleLogout} className={styles.signout} />
 		</div>
 	);
 }
