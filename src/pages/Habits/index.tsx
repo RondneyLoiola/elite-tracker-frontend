@@ -44,10 +44,16 @@ function Habits() {
 		}
 	}
 
-	async function handleToggle(id: string){
+	async function handleToggle(id: string) {
 		await api.patch(`/habits/${id}/toggle`);
 
-		await loadHabits();
+		await loadHabits(); //recarrega depois de marcado
+	}
+
+	async function handleRemove(id: string) {
+		await api.delete(`/habits/${id}`);
+
+		await loadHabits(); //recarrega depois de deletado
 	}
 
 	useEffect(() => {
@@ -86,7 +92,7 @@ function Habits() {
 										checked={item.completedDates.some((item) => item === today)}
 										onChange={async () => await handleToggle(item._id)}
 									/>
-									<TrashIcon />
+									<TrashIcon onClick={async () => await handleRemove(item._id)} />
 								</div>
 							</div>
 						))}
