@@ -3,6 +3,7 @@ import { Indicator } from '@mantine/core';
 import { Calendar } from '@mantine/dates';
 import { PlusIcon } from '@phosphor-icons/react';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import Button from '../../Components/Button';
@@ -10,6 +11,8 @@ import Header from '../../Components/Header';
 import Info from '../../Components/Info';
 import api from '../../services/api';
 import styles from './styles.module.css';
+
+dayjs.extend(utc);
 
 type Timers = {
 	focus: number;
@@ -87,13 +90,14 @@ function Focus() {
 		});
 
 		setTimeFrom(null); // limpa o timer
+
+		await loadFocusMetrics(currentMonth.toISOString());
 	}
 
 	const focusTimer = useTimer({
 		expiryTimestamp: new Date(),
 		onExpire: async () => {
-			if (timerState === TimerState.PAUSED) {
-				// se o timer estiver pausado
+			if (timerState === TimerState.FOCUS) {
 				await handleEnd(); // finaliza o timer
 			}
 		},
@@ -177,46 +181,22 @@ function Focus() {
 	async function loadFocusMetrics(currentMonth: string) {
 		const { data } = await api.get<FocusMetrics[]>('/focus-time/metrics', {
 			params: {
-				date: currentMonth, //envia date como parametro e currentMonth como valor
+				date: dayjs.utc(currentMonth).format(), // Envia em UTC
 			},
 		});
 
-		setFocusMetrics(data); //se metrics for undefined, manda um objeto vazio
+		setFocusMetrics(data);
 	}
 
 	async function loadFocusTimes(currentDate: string) {
 		const { data } = await api.get<FocusTime[]>('/focus-time', {
 			params: {
-				date: currentDate,
+				date: dayjs.utc(currentDate).format(), // Envia em UTC
 			},
 		});
 
-		console.log(data);
-
 		setFocusTimes(data);
 	}
-
-	const metricsInfoByDay = useMemo(() => {
-		const timesMetrics = focusTimes.map((item) => ({
-			timeFrom: dayjs(item.timeFrom),
-			timeTo: dayjs(item.timeTo),
-		}));
-
-		let totalTimeInMinutes = 0;
-
-		if (timesMetrics.length) {
-			for (const { timeFrom, timeTo } of timesMetrics) {
-				const diff = timeTo.diff(timeFrom, 'minutes'); // diferença em minutos
-
-				totalTimeInMinutes += diff;
-			}
-		}
-
-		return {
-			timesMetrics,
-			totalTimeInMinutes,
-		};
-	}, [focusTimes]);
 
 	const metricsInfoByMonth = useMemo(() => {
 		const completedDates: string[] = [];
@@ -224,7 +204,9 @@ function Focus() {
 
 		if (focusMetrics.length) {
 			focusMetrics.forEach((item) => {
-				const date = dayjs(`${item._id[0]}-${item._id[1]}-${item._id[2]}`)
+				// _id vem como [ano, mês, dia]
+				const date = dayjs
+					.utc(`${item._id[0]}-${item._id[1]}-${item._id[2]}`)
 					.startOf('day')
 					.toISOString();
 
@@ -239,16 +221,37 @@ function Focus() {
 		};
 	}, [focusMetrics]);
 
+	const metricsInfoByDay = useMemo(() => {
+		const timesMetrics = focusTimes.map((item) => ({
+			timeFrom: dayjs.utc(item.timeFrom), // Use UTC
+			timeTo: dayjs.utc(item.timeTo), // Use UTC
+		}));
+
+		let totalTimeInMinutes = 0;
+
+		if (timesMetrics.length) {
+			for (const { timeFrom, timeTo } of timesMetrics) {
+				const diff = timeTo.diff(timeFrom, 'minutes');
+				totalTimeInMinutes += diff;
+			}
+		}
+
+		return {
+			timesMetrics,
+			totalTimeInMinutes,
+		};
+	}, [focusTimes]);
+
 	async function handleSelectMonth(date: Date | string) {
 		const dateObject = typeof date === 'string' ? new Date(date) : date;
 
-		setCurrentMonth(dayjs(dateObject));
+		setCurrentMonth(dayjs.utc(dateObject));
 	}
 
 	async function handleSelectDay(date: Date | string) {
 		const dateObject = typeof date === 'string' ? new Date(date) : date;
 
-		setCurrentDate(dayjs(dateObject));
+		setCurrentDate(dayjs.utc(dateObject));
 	}
 
 	useEffect(() => {
@@ -337,21 +340,21 @@ function Focus() {
 				<div className={styles.calendarContainer}>
 					<Calendar
 						getDayProps={(date) => ({
-							selected: dayjs(date).isSame(currentDate), // verifica se o dia selecionado do calendário é igual ao currentDate
+							selected: dayjs.utc(date).isSame(dayjs.utc(currentDate), 'day'), // Adicione .utc() aqui
 							onClick: async () => await handleSelectDay(date),
 						})}
 						onMonthSelect={handleSelectMonth}
 						onNextMonth={handleSelectMonth}
 						onPreviousMonth={handleSelectMonth}
 						renderDay={(date) => {
-							const day = dayjs(date).date();
+							const day = dayjs.utc(date).date(); // Use .utc() aqui
 							const isSameDate = metricsInfoByMonth.completedDates.some(
-								(item) => dayjs(item).isSame(dayjs(date)),
+								(item) => dayjs.utc(item).isSame(dayjs.utc(date), 'day'), // Use .utc() em ambos
 							);
 							return (
 								<Indicator
-									size={10}
-									color="var(--info"
+									size={8}
+									color="var(--info)"
 									offset={-2}
 									disabled={!isSameDate}
 								>
