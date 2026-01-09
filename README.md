@@ -12,7 +12,6 @@ EliteTracker é um gerenciador de hábitos diários e tempos de focos, que ajuda
 - 🎨 Design moderno e intuitivo
 - 🔐 Sistema de autenticação
 - 📊 Visualização de dados em tempo real
-- 🌙 Tema claro/escuro (se aplicável)
 
 ## 🚀 Tecnologias Utilizadas
 
