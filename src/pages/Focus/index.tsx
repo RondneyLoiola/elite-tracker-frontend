@@ -7,9 +7,9 @@ import 'dayjs/locale/pt-br';
 import utc from 'dayjs/plugin/utc';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
-import Button from '../../components/Button';
-import Header from '../../components/Header';
-import Info from '../../components/Info';
+import Button from '../../components/button';
+import Header from '../../components/header';
+import Info from '../../components/info';
 import api from '../../services/api';
 import styles from './styles.module.css';
 

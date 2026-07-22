@@ -1,5 +1,5 @@
 import { GithubLogoIcon } from '@phosphor-icons/react';
-import Button from '../../components/Button';
+import Button from '../../components/button';
 import api from '../../services/api';
 import styles from './styles.module.css';
 
